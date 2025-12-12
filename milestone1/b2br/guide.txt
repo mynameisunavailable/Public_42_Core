@@ -1,0 +1,75 @@
+1. Project Overview & VM Basics
+•	How a VM works: It is software that emulates hardware, allowing you to run an Operating System (Guest) within another Operating System (Host). It uses a Hypervisor (like VirtualBox) to manage resources.
+•	Debian vs. Rocky:
+o	Debian: Uses apt/aptitude package managers. Known for stability. Uses AppArmor for security (profile-based access control).
+o	Rocky (RHEL/CentOS family): Uses dnf/yum. Enterprise-focused. Uses SELinux (Security Enhanced Linux) for mandatory access control.
+•	Aptitude vs. Apt: apt is lower-level and standard. aptitude is a higher-level interface with a text-based GUI and better dependency handling.
+2. Simple Setup Checks
+•	No GUI: The machine must boot into a command-line interface (TTY). If you see a desktop, you failed.
+•	UFW (Uncomplicated Firewall):
+o	Check status: sudo ufw status
+o	It must be active.
+•	SSH:
+o	Check status: sudo systemctl status ssh
+o	It must be active on port 4242 (not 22).
+3. User & Password Policy
+•	Users & Groups:
+o	Check current user's groups: groups (Must show sudo and user42).
+o	Create new user: sudo adduser <username>
+o	Create group: sudo groupadd evaluating
+o	Assign user to group: sudo usermod -aG evaluating <username>
+o	Check assignment: getent group evaluating
+•	Password Policy Implementation:
+o	Explain that you modified /etc/login.defs (for password age) and /etc/pam.d/common-password (using libpam-pwquality for complexity).
+o	Rules: Minimum length (10), uppercase, lowercase, number, no consecutive chars, no username in password.
+o	Advantages: prevents brute-force attacks, ensures basic security hygiene.
+o	Disadvantages: Hard to remember, users might write them down (security risk), annoying to type.
+4. Hostname & Partitions (LVM)
+•	Hostname:
+o	Check: hostnamectl
+o	Change: sudo hostnamectl set-hostname <new_name> (You will need to re-login or restart session to see the change in the prompt).
+o	Note: You should also edit /etc/hosts to match.
+•	Partitions (lsblk):
+o	Command: lsblk
+o	You must show the structure: encrypted partition $\rightarrow$ LVM.
+•	LVM Explanation:
+o	LVM (Logical Volume Manager): An abstraction layer between the OS and physical hard drives.
+o	PV (Physical Volume): The raw disk or partition.
+o	VG (Volume Group): A pool of storage created from PVs.
+o	LV (Logical Volume): Virtual partitions created from the VG. The OS sees these as partitions.
+o	Why? It allows resizing partitions dynamically without reformatting the whole disk.
+5. SUDO
+•	Concept: Allows a permitted user to execute a command as the superuser (root) or another user. It maintains the "Principle of Least Privilege."
+•	Configuration:
+o	Show config: sudo visudo or cat /etc/sudoers.d/sudo_config (if you created a separate file).
+o	Key Rules: passwd_tries=3, badpass_message="...", logfile="/var/log/sudo/sudo.log", requiretty, secure_path.
+•	Verification:
+o	Run a command with sudo (e.g., sudo ls).
+o	Check log: cat /var/log/sudo/sudo.log (The command you just ran must appear there).
+6. UFW (Firewall)
+•	Concept: A program to manage a netfilter firewall. It controls incoming and outgoing network traffic based on rules.
+•	Commands:
+o	List rules: sudo ufw status numbered
+o	Add rule: sudo ufw allow 8080
+o	Delete rule: sudo ufw delete <number> (get the number from the status command).
+7. SSH (Secure Shell)
+•	Concept: A protocol for operating network services securely over an unsecured network. It encrypts the connection.
+•	Configuration:
+o	File: /etc/ssh/sshd_config
+o	Check Port: Must be 4242.
+o	Check Root Login: PermitRootLogin no.
+•	Connection:
+o	Connect from host terminal: ssh <user>@<IP_ADDRESS> -p 4242
+o	Do not use root.
+8. Script Monitoring
+•	Cron: A time-based job scheduler in Unix-like operating systems.
+•	The Script: Must display system info (Architecture, Physical processors, vCpus, RAM usage, Disk usage, CPU load, Last boot, LVM use, TCP connections, User count, IP/MAC, Sudo commands).
+•	Scheduling:
+o	Show crontab: sudo crontab -u root -e or cat /etc/crontab.
+o	Original schedule: */10 * * * * /path/to/monitoring.sh (Every 10 minutes).
+o	To change to 1 minute: Change */10 to *.
+o	To stop: Comment out the line (put a # in front) in the crontab file.
+9. Bonus (If Mandatory is Perfect)
+•	WordPress: Requires a Web Server (Lighttpd is recommended as Nginx/Apache are forbidden), Database (MariaDB), and PHP.
+•	Service Choice: A common choice is Fail2Ban (protects against brute force by banning IPs) or a simple FTP server. You must explain why it is useful.
+
