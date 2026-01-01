@@ -59,7 +59,7 @@ int	map_invalid(t_game *g)
 	else if (path_is_valid(g) != 1)
 		invalid = print_err("Path is not valid");
 	if (invalid)
-		return (1);
+		return (free_arr(g->map), 1);
 	return (0);
 }
 
