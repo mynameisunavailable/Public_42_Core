@@ -1,0 +1,107 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   minishell_multiline.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: amtan <amtan@student.42singapore.sg>       +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/26 19:56:29 by amtan             #+#    #+#             */
+/*   Updated: 2026/03/13 14:26:10 by amtan            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../minishell.h"
+
+static char	ml_unclosed_quote(const char *s)
+{
+	char	q;
+
+	q = 0;
+	while (*s)
+	{
+		q = ms_quote_next(q, *s);
+		s++;
+	}
+	return (q);
+}
+
+static char	*ml_handle_eof(t_info *i, const char *first,
+				const char *prompt, char *rslt)
+{
+	char	q;
+
+	if (prompt == first)
+		return (ft_sfree((void **)&rslt), NULL);
+	q = 0;
+	if (rslt)
+		q = ml_unclosed_quote(rslt);
+	if (q != 0)
+	{
+		ft_putstr_fd("moonshell: unexpected EOF while looking for matching `",
+			STDERR_FILENO);
+		ft_putchar_fd(q, STDERR_FILENO);
+		ft_putchar_fd('\n', STDERR_FILENO);
+	}
+	else
+		ft_putendl_fd("moonshell: syntax error: unexpected end of file",
+			STDERR_FILENO);
+	i->err = 2;
+	ft_sfree((void **)&rslt);
+	return (NULL);
+}
+
+static char	*ml_append_line(t_info *i, char *rslt, char *line)
+{
+	char	*tmp;
+	size_t	len;
+
+	if (!rslt)
+	{
+		rslt = ft_strdup("");
+		if (!rslt)
+			return (ft_sfree((void **)&line), NULL);
+	}
+	len = ft_strlen(line);
+	if (i->interactive || len == 0 || line[len - 1] != '\n')
+	{
+		line = ft_memappend_back(line, len, "\n", 1);
+		if (!line)
+			return (ft_sfree((void **)&rslt), NULL);
+	}
+	tmp = ft_memappend_back(rslt, ft_strlen(rslt), line, ft_strlen(line));
+	ft_sfree((void **)&line);
+	return (tmp);
+}
+
+static const char	*ml_curr_prompt(const char *msg, char *rslt)
+{
+	if (rslt && *rslt)
+		return ("> ");
+	return (msg);
+}
+
+char	*read_multiline(t_info *i, const char *msg)
+{
+	char		*rslt;
+	char		*line;
+
+	i->cmd_line_no = i->line_no;
+	rslt = NULL;
+	while (TRUE)
+	{
+		line = ms_input_next_line(i, ml_curr_prompt(msg, rslt));
+		if (i->interactive && g_sig == SIGINT)
+			return (ft_sfree((void **)&i->input_buf), free(line),
+				read_multiline_sigint(rslt));
+		if (!line)
+			return (ml_handle_eof(i, msg, ml_curr_prompt(msg, rslt), rslt));
+		i->line_no++;
+		rslt = ml_append_line(i, rslt, line);
+		if (!rslt)
+			return (NULL);
+		if (line_is_complete(rslt))
+			return (rslt);
+		if (!i->interactive && !*rslt)
+			return (ft_sfree((void **)&rslt), ft_strdup(""));
+	}
+}
