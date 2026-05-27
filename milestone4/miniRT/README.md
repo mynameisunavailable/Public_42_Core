@@ -19,6 +19,7 @@ The mandatory part supports:
 * Hard shadows
 * Clean error handling for invalid `.rt` files
 * Clean exit with `ESC` or the window close button
+* Camera movement. Strafe: E,S,D,F; Zoom: T,G; Pitch: I,K; Yaw: J,L
 
 The bonus part adds:
 
